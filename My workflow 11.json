@@ -1,0 +1,231 @@
+{
+  "name": "My workflow 11",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -464,
+        -16
+      ],
+      "id": "b2f39426-a13b-4323-a693-95ad6a00b3b9",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Webhook se dynamic data uthao, agar empty ho toh fallback use karein\nconst inputData = $input.first()?.json || {};\n\nreturn [{\n  json: {\n    lead_name: inputData.lead_name || inputData.body?.lead_name || \"Sarah Connor\",\n    company_name: inputData.company_name || inputData.body?.company_name || \"Stripe\",\n    email: inputData.email || inputData.body?.email || \"sarah@stripe.com\",\n    website: inputData.website || inputData.body?.website || \"https://stripe.com\",\n    scraped_summary: inputData.scraped_summary || \"Leading financial infrastructure and online payments platform.\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -144,
+        -16
+      ],
+      "id": "12f3656b-2bca-4a30-b931-28107c3bf4b3",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this lead and output ONLY a raw JSON object with keys: \"score\" (0-100), \"reason\", and \"personalized_email\".\n\nLead Name: {{ $json.lead_name }}\nCompany Name: {{ $json.company_name }}\nEmail: {{ $json.email }}\nWebsite: {{ $json.website }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        64,
+        -16
+      ],
+      "id": "b88c81f7-03b6-4f12-aaeb-eececb28fed5",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        192
+      ],
+      "id": "1c726a5d-f4dc-44e0-9c1c-0352f24325a2",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "fTsVYWCDPoFG6z8q",
+          "name": "Groq account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "1dd540bf-2db5-4e6b-9d2e-36c2fc16dae7",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -304,
+        -16
+      ],
+      "id": "5e092787-6e41-464c-a5db-2a84fa6f5d28",
+      "name": "Webhook",
+      "webhookId": "1dd540bf-2db5-4e6b-9d2e-36c2fc16dae7"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=🚀 **New Lead Processed by AI!**\n\n👤 **Lead:** {{ $('Code in JavaScript').first().json.lead_name }} ({{ $('Code in JavaScript').first().json.company_name }})\n📧 **Email:** {{ $('Code in JavaScript').first().json.email }}\n🌐 **Website:** {{ $('Code in JavaScript').first().json.website }}\n\n📊 **Fit Score:** {{ $json.score }}/100\n\n💡 **Reason:**\n{{ $json.reason }}\n\n✉️ **Generated Email Pitch:**\n>>> {{ $json.personalized_email }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        416,
+        -48
+      ],
+      "id": "8cbb167b-b557-4359-b689-86a759804bbd",
+      "name": "Discord",
+      "webhookId": "1719511d-2cec-4f58-a4f3-e73a178f5336",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "7fVPaFCvLq9h2fPG",
+          "name": "Discord Webhook account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4481e33a-c8f4-4aba-abd2-300743d1764a",
+              "name": "score",
+              "value": "={{ JSON.parse($json.text.replace(/```json|```/g, '')).score }}",
+              "type": "string"
+            },
+            {
+              "id": "5feb57af-063c-4e6b-8add-983c299d192d",
+              "name": "reason",
+              "value": "={{ JSON.parse($json.text.replace(/```json|```/g, '')).reason }}",
+              "type": "string"
+            },
+            {
+              "id": "8e8ad7c1-dc69-4e50-af41-373e9938b204",
+              "name": "personalized_email",
+              "value": "={{ JSON.parse($json.text.replace(/```json|```/g, '')).personalized_email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        128,
+        320
+      ],
+      "id": "2768e1d6-d88d-406c-8da6-6d2a30b1791b",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "lead_name": "Sarah Connor",
+          "company_name": "Stripe",
+          "email": "sarah@stripe.com",
+          "website": "https://stripe.com"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "4b0b129e-2e86-4b3c-b629-30f143516530",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1021eb2e28e412e84ebadfd5758a71a9fc5450682f4cd0ae2b2f1884d5e4fdc7"
+  },
+  "nodeGroups": [],
+  "id": "gyztijGqlaq59X7Y",
+  "tags": []
+}
